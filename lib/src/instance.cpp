@@ -15,7 +15,8 @@ namespace vkpp
 		m_instance {VK_NULL_HANDLE},
 		m_surface {VK_NULL_HANDLE},
 		m_physicalDevice {nullptr},
-		m_device {nullptr}
+		m_device {nullptr},
+		m_swapChain {nullptr}
 	{
 		bool layerSupported {true};
 
@@ -34,12 +35,14 @@ namespace vkpp
 
 		m_physicalDevice = new vkpp::PhysicalDevice(*this);
 		m_device = new vkpp::Device(*m_physicalDevice);
+		m_swapChain = new vkpp::SwapChain(*this);
 	}
 
 
 
 	Instance::~Instance()
 	{
+		delete m_swapChain;
 		delete m_device;
 		delete m_physicalDevice;
 		vkDestroySurfaceKHR(m_instance, m_surface, nullptr);

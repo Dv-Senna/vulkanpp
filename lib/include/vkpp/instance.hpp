@@ -8,6 +8,7 @@
 
 #include "device.hpp"
 #include "physicalDevice.hpp"
+#include "swapChain.hpp"
 #include "utils/version.hpp"
 
 
@@ -42,7 +43,9 @@ namespace vkpp
 
 			inline VkInstance get() const noexcept {return m_instance;}
 			inline VkSurfaceKHR getSurface() const noexcept {return m_surface;}
-			inline const vkpp::InstanceParameter &getParameters() {return m_parameter;}
+			inline const vkpp::InstanceParameter &getParameters() const noexcept {return m_parameter;}
+			inline const vkpp::PhysicalDevice &getPhysicalDevice() const noexcept {return *m_physicalDevice;}
+			inline const vkpp::Device &getDevice() const noexcept {return *m_device;}
 
 		private:
 			static std::vector<const char *> s_checkExtensions(const vkpp::InstanceParameter &parameter);
@@ -61,6 +64,7 @@ namespace vkpp
 			VkSurfaceKHR m_surface;
 			vkpp::PhysicalDevice *m_physicalDevice;
 			vkpp::Device *m_device;
+			vkpp::SwapChain *m_swapChain;
 	};
 
 } // namespace vkpp

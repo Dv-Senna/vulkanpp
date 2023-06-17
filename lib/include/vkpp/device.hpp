@@ -15,6 +15,9 @@ namespace vkpp
 			Device(vkpp::PhysicalDevice &physicalDevice);
 			~Device();
 
+			inline VkDevice get() const noexcept {return m_device;}
+			inline const std::map<vkpp::QueueType, VkQueue> &getQueues() const noexcept {return m_queues;}
+
 		
 		private:
 			vkpp::Instance &m_instance;

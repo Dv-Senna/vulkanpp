@@ -58,6 +58,7 @@ namespace vkpp
 		m_instance {instance},
 		m_device {VK_NULL_HANDLE},
 		m_queues {},
+		m_swapChainInfos {},
 		m_properties {},
 		m_features {},
 		m_extensions {
@@ -86,7 +87,7 @@ namespace vkpp
 		scores.reserve(devicesCount);
 
 		for (auto device : devices)
-			scores.push_back(s_scoreGPU(device, m_extensions));
+			scores.push_back(s_scoreGPU(device, m_instance, m_extensions));
 
 		auto bestScore {vkpp::utils::max(scores.begin(), scores.end())};
 		if (*bestScore <= 0)
@@ -99,6 +100,7 @@ namespace vkpp
 		vkGetPhysicalDeviceProperties(m_device, &m_properties);
 		vkGetPhysicalDeviceFeatures(m_device, &m_features);
 
+		m_swapChainInfos = s_getSwapChainInfos(m_device, m_instance.getSurface());
 
 		#ifndef NDEBUG
 
@@ -129,11 +131,11 @@ namespace vkpp
 
 
 
-	int PhysicalDevice::s_scoreGPU(VkPhysicalDevice device, const std::vector<const char *> &extensions)
+	int PhysicalDevice::s_scoreGPU(VkPhysicalDevice device, vkpp::Instance &instance, const std::vector<const char *> &extensions)
 	{
 		int score {0};
 
-		if (!s_isValidGPU(device, extensions))
+		if (!s_isValidGPU(device, instance, extensions))
 			return -1;
 
 		VkPhysicalDeviceProperties properties {};
@@ -181,7 +183,37 @@ namespace vkpp
 
 
 
-	bool PhysicalDevice::s_isValidGPU(VkPhysicalDevice device, const std::vector<const char *> &extensions)
+	vkpp::SwapChainInfos PhysicalDevice::s_getSwapChainInfos(VkPhysicalDevice device, VkSurfaceKHR surface)
+	{
+		vkpp::SwapChainInfos swapChainInfos {};
+
+		if (vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &swapChainInfos.capabilities) != VK_SUCCESS)
+			throw std::runtime_error("VKPP : Can't get physical device surface capabilities");
+
+		
+		uint32_t formatsCount {};
+		if (vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatsCount, nullptr) != VK_SUCCESS)
+			throw std::runtime_error("VKPP : Can't get physical device surface formats count");
+
+		swapChainInfos.formats.resize(formatsCount);
+		if (vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatsCount, swapChainInfos.formats.data()) != VK_SUCCESS)
+			throw std::runtime_error("VKPP : Can't get physical device surface formats");
+
+
+		uint32_t presentModesCount {};
+		if (vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModesCount, nullptr) != VK_SUCCESS)
+			throw std::runtime_error("VKPP : Can't get physical device surface present modes count");
+
+		swapChainInfos.presentModes.resize(presentModesCount);
+		if (vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModesCount, swapChainInfos.presentModes.data()) != VK_SUCCESS)
+			throw std::runtime_error("VKPP : Can't get physical device surface present modes");
+
+		return swapChainInfos;
+	}
+
+
+
+	bool PhysicalDevice::s_isValidGPU(VkPhysicalDevice device, vkpp::Instance &instance, const std::vector<const char *> &extensions)
 	{
 		uint32_t supportedExtensionsCount {};
 		if (vkEnumerateDeviceExtensionProperties(device, nullptr, &supportedExtensionsCount, nullptr) != VK_SUCCESS)
@@ -207,6 +239,11 @@ namespace vkpp
 			if (!isSupported)
 				return false;
 		}
+
+
+		vkpp::SwapChainInfos swapChainInfos {s_getSwapChainInfos(device, instance.getSurface())};
+		if (swapChainInfos.formats.empty() || swapChainInfos.presentModes.empty())
+			return false;
 
 
 		vkpp::QueueFamilyIndices queues {s_getQueueFamiliesIndices(device)};
