@@ -30,3 +30,18 @@
 *.exe
 *.out
 *.app
+
+# Deps
+vendors/*
+
+# vs code
+.vscode/*
+
+# Makefiles
+Makefile
+*.make
+
+# Shells
+*.bat
+*.ps1
+*.sh
